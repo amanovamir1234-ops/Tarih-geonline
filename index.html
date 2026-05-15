@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEONLINE | Путь Истории</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <div class="bg-ornament"></div>
+
+    <header class="navbar glass">
+        <div class="logo"><span class="geo">GEO</span>NLINE</div>
+        <div class="nav-controls">
+            <button class="btn-text" id="mega-quiz-btn" style="color: #ffaa00; font-weight: 800;">🔥 Мега-Квиз</button>
+            <button class="btn-text" id="full-db-btn" style="color: var(--gold-light); font-weight: 800;">📚 База</button>
+            <button class="btn-restart" id="restart-btn"><span>🔄</span> Заново</button>
+            <button class="btn-text" id="unlock-all-btn">Открыть всё (Dev)</button>
+            <button class="theme-toggle" id="theme-toggle">🌙</button>
+        </div>
+    </header>
+
+    <div class="progress-wrapper">
+        <div class="progress-info">
+            <span>Прогресс</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="main-progress"></div>
+        </div>
+    </div>
+
+    <main class="path-container" id="path-container">
+        <svg class="path-svg" id="path-svg"></svg>
+        <div class="nodes-wrapper" id="nodes-wrapper">
+            </div>
+    </main>
+
+    <div class="modal" id="theory-modal">
+        <div class="modal-content glass fade-in">
+            <h2 id="theory-title" class="gold-text">Название темы</h2>
+            <div class="content-body" id="theory-text">Загрузка теории...</div>
+            <button class="btn-primary" id="go-to-quiz">Перейти к квизу</button>
+            <button class="btn-close" onclick="closeModal('theory-modal')">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="modal" id="quiz-modal">
+        <div class="modal-content glass fade-in" id="quiz-box">
+            <h2 class="gold-text">Квиз</h2>
+            <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+            <div class="content-body" id="question-text">Вопрос?</div>
+            <div class="options-grid" id="options-container">
+                </div>
+            <button class="btn-close" onclick="closeModal('quiz-modal')" style="margin-top: 20px;">Прервать квиз</button>
+        </div>
+    </div>
+
+    <div class="modal" id="fast-track-modal">
+        <div class="modal-content glass fade-in" style="max-width: 450px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+            <h2 class="gold-text">Прыжок во времени</h2>
+            <div class="content-body" style="font-size: 1.1rem;">
+                Ты собираешься открыть <strong id="fast-track-target" style="font-size: 1.4rem; color: var(--gold-light);">X</strong> уровень.<br><br>
+                Все предыдущие темы будут автоматически отмечены как <b>«Пройденные»</b>. Ты уверен в своих знаниях?
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button class="btn-close" style="margin: 0; flex: 1;" onclick="closeModal('fast-track-modal')">Отмена</button>
+                <button class="btn-primary" style="margin: 0; flex: 1;" id="confirm-skip-btn">Вперед!</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="database-modal">
+        <div class="modal-content glass fade-in" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;">
+            <h2 class="gold-text" style="margin-bottom: 10px;">📚 Справочник GEONLINE</h2>
+            <p style="color: #888; margin-bottom: 20px;">Вся теория из 48 тем в одном месте.</p>
+            
+            <div class="content-body" id="full-database-content" style="flex-grow: 1; overflow-y: auto; text-align: left; padding: 10px; border-top: 1px solid rgba(212, 175, 55, 0.2);">
+                </div>
+            
+            <button class="btn-close" style="margin-top: 20px;" onclick="closeModal('database-modal')">Закрыть</button>
+        </div>
+    </div>
+    <div class="modal" id="restart-modal">
+        <div class="modal-content glass fade-in" style="max-width: 450px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+            <h2 style="color: #ff5c5c; margin-bottom: 20px; font-size: 2rem; font-weight: 800; text-shadow: 0 2px 10px rgba(255, 76, 76, 0.3);">Сброс прогресса</h2>
+            <div class="content-body" style="font-size: 1.1rem; text-align: center;">
+                Ты уверен, что хочешь стереть весь свой путь и начать историю с чистого листа?<br><br>
+                <span style="color: #ff5c5c; font-weight: bold;">Это действие нельзя отменить!</span>
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button class="btn-close" style="margin: 0; flex: 1;" onclick="closeModal('restart-modal')">Отмена</button>
+                <button class="btn-primary" style="margin: 0; flex: 1; background: linear-gradient(135deg, #ff5c5c, #d32f2f); color: white; box-shadow: 0 10px 20px rgba(255, 76, 76, 0.3);" id="confirm-restart-btn">Да, стереть</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

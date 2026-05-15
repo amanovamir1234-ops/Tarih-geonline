@@ -1,0 +1,432 @@
+:root {
+    --bg-color: #f4f1ea;
+    --text-color: #2d2d2d;
+    --gold: #b8860b;
+    --gold-light: #d4af37;
+    --glass: rgba(255, 255, 255, 0.85);
+    --node-locked: linear-gradient(145deg, #e0e0e0, #c8c8c8);
+    --node-unlocked: linear-gradient(145deg, #f1d592, #d4af37);
+    --path-color: rgba(184, 134, 11, 0.3);
+}
+
+body.dark-mode {
+    --bg-color: #121418;
+    --text-color: #eaeaea;
+    --gold: #d4af37;
+    --gold-light: #f1d592;
+    --glass: rgba(30, 32, 38, 0.9);
+    --node-locked: linear-gradient(145deg, #3a3d45, #22242b);
+    --node-unlocked: linear-gradient(145deg, #e5c07b, #b8860b);
+    --path-color: rgba(212, 175, 55, 0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+body { background: var(--bg-color); color: var(--text-color); transition: background 0.3s; overflow-x: hidden; }
+
+/* Текстура на фоне */
+.bg-ornament {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background-image: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="%23d4af37" opacity="0.1"/></svg>');
+    z-index: -1;
+}
+
+.glass {
+    backdrop-filter: blur(10px);
+    background: var(--glass);
+    border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.navbar { display: flex; justify-content: space-between; padding: 15px 5%; position: sticky; top: 0; z-index: 100; }
+.logo { font-weight: 800; font-size: 1.5rem; letter-spacing: 1px; }
+.geo { color: var(--gold); }
+.nav-controls { display: flex; gap: 15px; align-items: center; }
+.btn-text { background: none; border: none; color: var(--gold); cursor: pointer; font-weight: 600; }
+.theme-toggle { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+
+/* Глобальный прогресс */
+.progress-wrapper { max-width: 600px; margin: 40px auto 0; padding: 0 20px; }
+.progress-info { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; color: var(--gold); }
+.progress-track { width: 100%; height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+.progress-fill { height: 100%; width: 0%; background: var(--gold); border-radius: 10px; transition: 0.5s ease-out; }
+
+/* Путь и Узлы */
+.path-container { position: relative; width: 100%; max-width: 500px; margin: 50px auto; padding-bottom: 100px; }
+.path-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+.nodes-wrapper { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 70px; }
+
+/* Контейнер уровня для смещения (Змейка) */
+.level-row { display: flex; justify-content: center; width: 100%; position: relative; }
+.level-row:nth-child(even) { transform: translateX(60px); }
+.level-row:nth-child(odd) { transform: translateX(-60px); }
+
+/* Золотая монета / Артефакт */
+.node-btn {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 3px solid #111;
+    background: var(--node-locked);
+    color: #888;
+    font-size: 1.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.node-btn.unlocked {
+    background: var(--node-unlocked);
+    color: #121418;
+    border-color: #8b6b0e;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), inset 0 2px 8px rgba(255,255,255,0.5);
+}
+
+.node-btn:hover:not(.locked) { transform: scale(1.1); }
+.node-btn:active:not(.locked) { transform: scale(0.95); }
+
+.node-title {
+    position: absolute; 
+    top: 95px; /* Чуть отодвинул от монеты */
+    width: 160px; 
+    text-align: center;
+    font-size: 0.9rem; 
+    font-weight: 700; 
+    color: var(--text-color); /* Теперь цвет будет меняться вместе с темой */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* Мощная тень для читаемости */
+    pointer-events: none; /* Чтобы текст не перекрывал клик по кнопке */
+    opacity: 0.9;
+}
+
+/* =========================================
+   ПРЕМИУМ МОДАЛКИ (ТЕОРИЯ И КВИЗ)
+   ========================================= */
+.modal { 
+    display: none; 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(10, 11, 14, 0.85); /* Более глубокий темный фон */
+    backdrop-filter: blur(5px);
+    z-index: 1000; align-items: center; justify-content: center; padding: 20px; 
+}
+
+.modal-content { 
+    width: 100%; max-width: 600px; padding: 40px; 
+    border-radius: 24px; text-align: center; 
+    max-height: 90vh; 
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02);
+}
+
+.gold-text { 
+    color: var(--gold-light); 
+    margin-bottom: 20px; 
+    font-size: 2rem;
+    font-weight: 800;
+    text-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+}
+
+/* Красивая теория с кастомным скроллом */
+.content-body { 
+    margin: 20px 0; line-height: 1.8; text-align: left; font-size: 1.1rem; 
+    color: #e0e0e0;
+    max-height: 50vh; 
+    overflow-y: auto; 
+    padding-right: 15px; 
+}
+
+.content-body p { margin-bottom: 15px; }
+.content-body strong { color: var(--gold-light); font-weight: 600; }
+
+/* Стилизация скроллбара (как в нативных приложениях) */
+.content-body::-webkit-scrollbar { width: 6px; }
+.content-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+.content-body::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+
+/* Главные кнопки (Перейти к квизу) */
+.btn-primary { 
+    width: 100%; padding: 18px; border: none; border-radius: 16px; 
+    background: linear-gradient(135deg, var(--gold-light), var(--gold)); 
+    color: #111; font-size: 1.2rem; font-weight: 800; cursor: pointer; 
+    transition: all 0.3s ease; 
+    box-shadow: 0 10px 20px rgba(184, 134, 11, 0.3);
+}
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(184, 134, 11, 0.4); filter: brightness(1.1); }
+.btn-primary:active { transform: translateY(1px); }
+
+/* Кнопки отмены/закрытия */
+.btn-close { 
+    width: 100%; padding: 16px; border: 1px solid rgba(255,255,255,0.2); 
+    border-radius: 16px; background: rgba(255,255,255,0.05); 
+    color: var(--text-color); font-weight: 600; cursor: pointer; 
+    margin-top: 15px; transition: all 0.2s; font-size: 1.1rem;
+}
+.btn-close:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); }
+
+/* =========================================
+   ДИЗАЙН КВИЗА
+   ========================================= */
+#question-text {
+    font-size: 1.3rem; font-weight: 700; text-align: center; margin: 30px 0; color: #fff;
+}
+
+/* Сочные варианты ответов */
+.options-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+.option-btn { 
+    padding: 18px 20px; 
+    border: 2px solid rgba(212, 175, 55, 0.3); 
+    background: rgba(18, 20, 24, 0.6); 
+    color: #e0e0e0; border-radius: 16px; cursor: pointer; 
+    font-size: 1.1rem; font-weight: 600; transition: all 0.25s ease; 
+    text-align: left; position: relative; overflow: hidden;
+}
+.option-btn:hover { 
+    background: rgba(212, 175, 55, 0.1); 
+    border-color: var(--gold-light); 
+    transform: translateX(5px); /* Легкий сдвиг вправо при наведении */
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.15);
+}
+.option-btn:active { transform: scale(0.98); }
+
+/* Прогресс-бар квиза (Неоновое свечение) */
+.quiz-progress-bar { 
+    width: 100%; height: 8px; background: rgba(0,0,0,0.4); 
+    border-radius: 10px; margin-bottom: 20px; overflow: hidden; 
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+.quiz-progress-fill { 
+    width: 0%; height: 100%; 
+    background: linear-gradient(90deg, var(--gold), #ffdf73); 
+    border-radius: 10px; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    box-shadow: 0 0 10px var(--gold-light);
+}
+
+/* Кинематографичная анимация появления модалок */
+.fade-in { animation: modalFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes modalFade { 
+    from { opacity: 0; transform: scale(0.95) translateY(20px); } 
+    to { opacity: 1; transform: scale(1) translateY(0); } 
+}
+
+/* Квиз */
+.options-grid { display: grid; gap: 10px; margin-top: 20px; }
+.option-btn { padding: 15px; border: 2px solid var(--gold); background: transparent; color: var(--text-color); border-radius: 12px; cursor: pointer; font-size: 1rem; transition: 0.2s; text-align: left; }
+.option-btn:hover { background: rgba(212, 175, 55, 0.1); }
+.quiz-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 5px; margin-bottom: 20px; }
+.quiz-progress-fill { width: 0%; height: 100%; background: var(--gold); border-radius: 5px; transition: 0.3s; }
+
+/* Эффект ошибки (встряска) */
+.shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: #ff4c4c !important; color: #ff4c4c !important;}
+@keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+/* Дизайн кнопок для окна пропуска */
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+.modal-actions button {
+    margin: 0; /* Сбрасываем стандартные отступы */
+    flex: 1; /* Кнопки занимают ровно по 50% ширины */
+}
+
+/* Красивая кнопка "Начать заново" */
+.btn-restart {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 76, 76, 0.1); /* Полупрозрачный красный фон */
+    border: 1px solid rgba(255, 76, 76, 0.3);
+    border-radius: 20px;
+    color: #ff5c5c;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-restart:hover {
+    background: rgba(255, 76, 76, 0.2);
+    border-color: rgba(255, 76, 76, 0.8);
+    box-shadow: 0 0 15px rgba(255, 76, 76, 0.2); /* Легкое неоновое свечение */
+    transform: translateY(-2px);
+    color: #ff7676;
+}
+
+.btn-restart:active {
+    transform: scale(0.95);
+}
+
+.btn-restart span {
+    font-size: 1.1rem;
+    transition: transform 0.4s ease; /* Анимация для иконки */
+}
+
+/* Иконка крутится при наведении */
+.btn-restart:hover span {
+    transform: rotate(-180deg);
+}
+/* Дизайн элементов внутри Справочника */
+.db-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+}
+
+.db-item:hover {
+    background: rgba(212, 175, 55, 0.05);
+    border-color: var(--gold-light);
+}
+
+.db-item-title {
+    color: var(--gold-light);
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.db-item-title span {
+    background: var(--gold);
+    color: #111;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+/* Дизайн вопросов и ответов (Шпаргалка) в Базе */
+.qa-list { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+.qa-item { 
+    background: rgba(0,0,0,0.3); 
+    padding: 12px 15px; 
+    border-radius: 12px; 
+    border-left: 3px solid var(--gold); 
+}
+.qa-q { font-weight: 700; color: #e0e0e0; margin-bottom: 6px; font-size: 0.95rem; }
+.qa-a { color: #2ecc71; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+/* Красивая теория с кастомным скроллом */
+.content-body { 
+    margin: 20px 0; line-height: 1.8; text-align: left; font-size: 1.1rem; 
+    color: var(--text-color); /* Раньше тут был жесткий белый, теперь адаптивный */
+    max-height: 50vh; 
+    overflow-y: auto; 
+    padding-right: 15px; 
+}
+
+/* Дизайн вопроса в квизе */
+#question-text {
+    font-size: 1.3rem; font-weight: 700; text-align: center; margin: 30px 0; 
+    color: var(--text-color); /* Адаптивный цвет для вопроса */
+}
+
+/* Сочные варианты ответов */
+.option-btn { 
+    padding: 18px 20px; 
+    border: 2px solid rgba(212, 175, 55, 0.3); 
+    background: var(--glass); /* Кнопки теперь тоже подстраиваются под фон */
+    color: var(--text-color); /* Адаптивный текст ответа */
+    border-radius: 16px; cursor: pointer; 
+    font-size: 1.1rem; font-weight: 600; transition: all 0.25s ease; 
+    text-align: left; position: relative; overflow: hidden;
+}
+
+/* =========================================
+   СТИЛИ ДЛЯ РАСКРЫВАЮЩИХСЯ УРОКОВ (АККОРДЕОН)
+   ========================================= */
+.db-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.accordion-arrow {
+    color: var(--gold);
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.db-item-body {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.db-item.active {
+    border-color: var(--gold-light);
+    background: rgba(212, 175, 55, 0.05);
+}
+
+/* =========================================
+   ИДЕАЛЬНАЯ МОБИЛЬНАЯ АДАПТАЦИЯ (ФИНАЛЬНАЯ)
+   ========================================= */
+@media (max-width: 768px) {
+    /* Навигация */
+    .navbar { padding: 10px 15px; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .logo { width: 100%; text-align: center; margin-bottom: 3px; font-size: 1.4rem; }
+    .nav-controls { width: 100%; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .btn-text, .btn-restart { padding: 6px 12px; font-size: 0.8rem; }
+    
+    /* Прогресс-бар */
+    .progress-wrapper { margin-top: 20px; padding: 0 10px; }
+    .progress-info { font-size: 0.8rem; }
+    
+    /* Змейка */
+    .path-container { max-width: 100%; margin: 30px auto; padding-bottom: 60px; }
+    .level-row:nth-child(even) { transform: translateX(25px); }
+    .level-row:nth-child(odd) { transform: translateX(-25px); }
+    .node-btn { width: 60px; height: 60px; font-size: 1.1rem; }
+    .node-title { top: 70px; width: 105px; font-size: 0.75rem; line-height: 1.2; }
+    
+    /* МОДАЛКИ (ТЕОРИЯ, КВИЗ) - ИСПРАВЛЕНИЕ СКРОЛЛА */
+    .modal { 
+        padding: 15px; /* Задаем отступы от краев экрана */
+        align-items: center; /* Центрируем по вертикали */
+    }
+    
+    .modal-content { 
+        padding: 25px 20px; 
+        border-radius: 20px; 
+        width: 100%; 
+        max-height: 85vh; /* Окно не будет вылезать за пределы экрана */
+        display: flex; 
+        flex-direction: column; /* Позволяет контенту внутри скроллиться */
+    }
+    
+    .gold-text { font-size: 1.5rem; margin-bottom: 15px; flex-shrink: 0; } /* Заголовок не сжимается */
+    
+    /* ВОТ ТУТ МАГИЯ ДЛЯ ДЛИННОЙ ТЕОРИИ */
+    .content-body { 
+        font-size: 1rem; 
+        padding-right: 10px; 
+        overflow-y: auto; /* Включаем вертикальный скролл */
+        flex-grow: 1; /* Позволяем блоку с текстом занимать все свободное место */
+        margin-bottom: 20px; /* Отступ до кнопок */
+    }
+    
+    /* Чтобы кнопки всегда были внизу и не уезжали */
+    .btn-primary, .btn-close { 
+        flex-shrink: 0; 
+        padding: 14px; 
+        font-size: 1rem; 
+        margin-top: 10px; /* Добавил отступ между кнопками в теории */
+    }
+    
+    /* Квиз на мобилке */
+    #question-text { font-size: 1.2rem; margin: 15px 0 25px 0; }
+    .options-grid { gap: 10px; overflow-y: auto; max-height: 50vh; padding-right: 5px; } /* Скролл для вариантов, если их много */
+    .option-btn { padding: 14px; font-size: 0.95rem; }
+    
+    /* Справочник на мобилке */
+    .db-item { padding: 12px; }
+    .db-item-title { font-size: 1.05rem; }
+    .db-item-title span { padding: 1px 6px; font-size: 0.75rem; }
+    .qa-q, .qa-a { font-size: 0.85rem; }
+}
