@@ -47,15 +47,19 @@
     </div>
 
     <div class="modal" id="quiz-modal">
-        <div class="modal-content glass fade-in" id="quiz-box">
-            <h2 class="gold-text">Квиз</h2>
-            <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
-            <div class="content-body" id="question-text">Вопрос?</div>
-            <div class="options-grid" id="options-container">
-                </div>
-            <button class="btn-close" onclick="closeModal('quiz-modal')" style="margin-top: 20px;">Прервать квиз</button>
+    <div class="modal-content glass fade-in" id="quiz-box">
+        <h2 class="gold-text" style="margin-bottom: 5px;">Квиз</h2>
+        
+        <div style="color: var(--text-color); font-weight: 600; margin-bottom: 20px; font-size: 1.1rem; text-align: center; letter-spacing: 0.5px;">
+            Изучено: <span id="correct-score-span" style="color: #2ecc71; font-weight: 800; text-shadow: 0 0 10px rgba(46,204,113,0.2);">0</span> из <span id="total-score-span" style="color: var(--gold-light);">0</span>
         </div>
+
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+        <div class="content-body" id="question-text">Вопрос?</div>
+        <div class="options-grid" id="options-container"></div>
+        <button class="btn-close" onclick="closeModal('quiz-modal')" style="margin-top: 20px;">Прервать квиз</button>
     </div>
+</div>
 
     <div class="modal" id="fast-track-modal">
         <div class="modal-content glass fade-in" style="max-width: 450px; text-align: center;">

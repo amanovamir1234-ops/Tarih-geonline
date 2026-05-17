@@ -1,5 +1,6 @@
 // --- БАЗА ДАННЫХ ---
-let db = null;
+let quizTotalCount = 0;   // Сколько всего УНИКАЛЬНЫХ вопросов в запущенном тесте
+let quizCorrectCount = 0; // Сколько вопросов уже решено правильноlet db = null;
 let currentLevelUnlocked = 1; 
 let activeQuizLevel = null;
 let quizQueue = []; 
@@ -125,6 +126,10 @@ function startQuiz(levelId) {
     const data = db[levelId];
     quizQueue = [...data.questions].map((q, index) => ({...q, originalIndex: index}));
     
+    // Фиксируем количество вопросов для обычного уровня
+    quizTotalCount = quizQueue.length;
+    quizCorrectCount = 0;
+    
     document.getElementById('quiz-modal').style.display = 'flex';
     renderNextQuestion();
 }
@@ -134,6 +139,10 @@ function renderNextQuestion() {
         completeLevel();
         return;
     }
+
+    // Выводим актуальный счет на плашку
+    document.getElementById('correct-score-span').innerText = quizCorrectCount;
+    document.getElementById('total-score-span').innerText = quizTotalCount;
 
     const currentQ = quizQueue[0];
     document.getElementById('question-text').innerText = currentQ.q;
@@ -149,7 +158,7 @@ function renderNextQuestion() {
         optionsContainer.appendChild(btn);
     });
 
-    // Считаем прогресс (Обычный квиз или Мега-Квиз)
+    // Твой расчет зеленой полосы прогресса (работает параллельно)
     let totalOriginal = activeQuizLevel === 'mega' ? megaQuizTotal : db[activeQuizLevel].questions.length;
     let percent = ((totalOriginal - quizQueue.length) / totalOriginal) * 100;
     if (percent < 0) percent = 0;
@@ -157,19 +166,38 @@ function renderNextQuestion() {
 }
 
 function checkAnswer(selectedIdx, correctIdx, btnElement) {
+    // Сразу блокируем все кнопки, чтобы нельзя было нажать на другую во время паузы
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
     if (selectedIdx === correctIdx) {
+        // ПРАВИЛЬНЫЙ ОТВЕТ
         btnElement.style.backgroundColor = 'rgba(46, 204, 113, 0.4)';
         btnElement.style.borderColor = '#2ecc71';
-        quizQueue.shift(); 
+        
+        quizCorrectCount++; // Увеличиваем счетчик правильных!
+        quizQueue.shift();  // Удаляем вопрос из базы, он пройден
+        
         setTimeout(renderNextQuestion, 500);
     } else {
+        // НЕПРАВИЛЬНЫЙ ОТВЕТ
         btnElement.classList.add('shake');
+        
+        // Красиво подсветим правильный вариант зеленым, чтобы пользователь учился на ошибке
+        if (buttons[correctIdx]) {
+            buttons[correctIdx].style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+            buttons[correctIdx].style.borderColor = '#2ecc71';
+        }
+        
         setTimeout(() => {
             btnElement.classList.remove('shake');
+            // Перемещаем вопрос в конец очереди (твоя механика Дуолинго)
             const failedQ = quizQueue.shift();
             quizQueue.push(failedQ); 
+            
+            // quizCorrectCount НЕ увеличился, цифра на экране осталась прежней!
             renderNextQuestion();
-        }, 800);
+        }, 1200); // Даем чуть больше времени рассмотреть правильный ответ
     }
 }
 
@@ -296,6 +324,11 @@ document.getElementById('mega-quiz-btn').onclick = () => {
     }
     
     megaQuizTotal = quizQueue.length; 
+    
+    // Фиксируем количество вопросов для Мега-Квиза
+    quizTotalCount = quizQueue.length;
+    quizCorrectCount = 0;
+    
     document.getElementById('quiz-modal').style.display = 'flex';
     renderNextQuestion();
 };
