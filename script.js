@@ -180,25 +180,24 @@ function checkAnswer(selectedIdx, correctIdx, btnElement) {
         
         setTimeout(renderNextQuestion, 500);
     } else {
-        // НЕПРАВИЛЬНЫЙ ОТВЕТ
-        btnElement.classList.add('shake');
-        
-        // Красиво подсветим правильный вариант зеленым, чтобы пользователь учился на ошибке
-        if (buttons[correctIdx]) {
-            buttons[correctIdx].style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
-            buttons[correctIdx].style.borderColor = '#2ecc71';
-        }
-        
-        setTimeout(() => {
-            btnElement.classList.remove('shake');
-            // Перемещаем вопрос в конец очереди (твоя механика Дуолинго)
-            const failedQ = quizQueue.shift();
-            quizQueue.push(failedQ); 
-            
-            // quizCorrectCount НЕ увеличился, цифра на экране осталась прежней!
-            renderNextQuestion();
-        }, 1200); // Даем чуть больше времени рассмотреть правильный ответ
+    btnElement.classList.add('shake');
+
+    if (buttons[correctIdx]) {
+        buttons[correctIdx].style.backgroundColor = 'rgba(46, 204, 113, 0.4)';
+        buttons[correctIdx].style.borderColor = '#2ecc71';
     }
+
+    const wrongQuestion = quizQueue.shift();
+
+    const position = Math.min(
+        Math.floor(Math.random() * 2) + 2,
+        quizQueue.length
+    );
+
+    quizQueue.splice(position, 0, wrongQuestion);
+
+    setTimeout(renderNextQuestion, 900);
+}
 }
 
 function completeLevel() {
